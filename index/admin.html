@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Publish Writings</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <body>
+    <script>
+        if (localStorage.getItem('isAdmin') !== 'true') {
+        window.location.href = 'admin-login.html';
+        }
+    </script>
+
+    <header class="l-header">
+        <nav class="nav bd-grid">
+            <div>
+                <a href="index.html" class="nav__logo">The DaniEl</a>
+            </div>
+            <div class="nav__menu" id="nav-menu">
+                <ul class="nav__list">
+                    <li class="nav__item"><a href="index.html" class="nav__link">Home</a></li>
+                    <li class="nav__item"><a href="writings.html" class="nav__link">Writings</a></li>
+                    <li class="nav__item"><a href="admin.html" class="nav__link active-link">Admin</a></li>
+                </ul>
+            </div>
+            <button onclick="localStorage.removeItem('isAdmin');window.location.href='admin-login.html';" class="button" style="margin-left:1rem;">Logout</button>
+        </nav>
+    </header>
+
+    <main class="l-main">
+        <section class="writings section" id="admin-writings">
+            <h2 class="section-title">Publish a New Writing</h2>
+            <div class="writings__form-container">
+                <form id="adminWritingForm" class="contact__form">
+                    <input type="hidden" id="editIndex">
+                    <input type="text" id="adminTitle" class="contact__input" placeholder="Title" required>
+                    <textarea id="adminContent" class="contact__input" placeholder="Write your article here..." rows="8" required></textarea>
+                    <input type="submit" value="Publish" class="contact__button button">
+                </form>
+                <p id="adminSuccess" style="color:#FFD700;display:none;margin-top:1rem;">Article published!</p>
+            </div>
+            <h2 class="section-title" style="margin-top:2rem;">Manage Writings</h2>
+            <div class="writings__container bd-grid" id="admin-writings-list">
+                <!-- Articles will be loaded here -->
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p class="footer__title">Daniel</p>
+        <p class="footer__copy">&#169; 2025 Daniel. All rights reserved</p>
+    </footer>
+
+    <script>
+    // Render all writings with edit/delete options
+    function renderAdminWritings() {
+        const writingsList = document.getElementById('admin-writings-list');
+        writingsList.innerHTML = '';
+        const writings = JSON.parse(localStorage.getItem('writings') || '[]');
+        if (writings.length === 0) {
+            writingsList.innerHTML = '<p style="color:#FFD700;">No articles yet.</p>';
+        } else {
+            writings.forEach((writing, idx) => {
+                const div = document.createElement('div');
+                div.className = 'writing__item case__item';
+                div.innerHTML = `
+  <h3>${writing.title}</h3>
+  <p>${writing.content.replace(/\n/g, '<br>')}</p>
+  <div class="writing__actions">
+    <button class="edit-btn button" data-idx="${idx}" style="margin-right:10px;">Edit</button>
+    <button class="delete-btn button" data-idx="${idx}" style="background:#b22222;color:#fff;">Delete</button>
+  </div>
+`;
+                writingsList.appendChild(div);
+            });
+        }
+    }
+
+    // Handle add/edit
+    document.getElementById('adminWritingForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const title = document.getElementById('adminTitle').value.trim();
+        const content = document.getElementById('adminContent').value.trim();
+        const editIndex = document.getElementById('editIndex').value;
+        let writings = JSON.parse(localStorage.getItem('writings') || '[]');
+        if (title && content) {
+            if (editIndex !== '') {
+                // Edit mode
+                writings[editIndex] = { title, content };
+                document.getElementById('adminSuccess').textContent = 'Article updated!';
+            } else {
+                // Add mode
+                writings.push({ title, content });
+                document.getElementById('adminSuccess').textContent = 'Article published!';
+            }
+            localStorage.setItem('writings', JSON.stringify(writings));
+            this.reset();
+            document.getElementById('editIndex').value = '';
+            document.getElementById('adminSuccess').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('adminSuccess').style.display = 'none';
+            }, 2000);
+            renderAdminWritings();
+        }
+    });
+
+    // Handle edit and delete buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('edit-btn')) {
+            const idx = e.target.getAttribute('data-idx');
+            const writings = JSON.parse(localStorage.getItem('writings') || '[]');
+            document.getElementById('adminTitle').value = writings[idx].title;
+            document.getElementById('adminContent').value = writings[idx].content;
+            document.getElementById('editIndex').value = idx;
+            document.querySelector('#adminWritingForm input[type="submit"]').value = "Update";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        if (e.target.classList.contains('delete-btn')) {
+            const idx = e.target.getAttribute('data-idx');
+            let writings = JSON.parse(localStorage.getItem('writings') || '[]');
+            if (confirm('Are you sure you want to delete this article?')) {
+                writings.splice(idx, 1);
+                localStorage.setItem('writings', JSON.stringify(writings));
+                renderAdminWritings();
+            }
+        }
+    });
+
+    // Reset form to add mode after editing
+    document.getElementById('adminWritingForm').addEventListener('reset', function() {
+        document.getElementById('editIndex').value = '';
+        document.querySelector('#adminWritingForm input[type="submit"]').value = "Publish";
+    });
+
+    renderAdminWritings();
+    </script>
+</body>
+</html>
