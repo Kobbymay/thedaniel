@@ -1,2 +1,1 @@
 # thedaniel
-a portfolio website
